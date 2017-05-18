@@ -54,6 +54,8 @@
 # include <stdexcept>
 #endif
 
+#include <functional>
+
 namespace ev {
 
   typedef ev_tstamp tstamp;
@@ -418,6 +420,21 @@ namespace ev {
 #  define EV_PX_
 #endif
 
+  template<class watcher>
+  struct functor_from_lambda
+  {
+    std::function<void(watcher&,int)> lambda;
+    functor_from_lambda() : functor_from_lambda([](watcher&,int){}){}
+    functor_from_lambda(const std::function<void(watcher&,int)> &lambda)
+    {
+      this->lambda = lambda;
+    }
+    void operator() (watcher &w, int revents)
+    {
+      this->lambda(w,revents);
+    }
+  };
+
   template<class ev_watcher, class watcher>
   struct base : ev_watcher
   {
@@ -430,6 +447,8 @@ namespace ev {
         this->EV_A = EV_A;
       }
     #endif
+
+    functor_from_lambda<watcher> functor;
 
     base (EV_PX) throw ()
     #if EV_MULTIPLICITY
@@ -485,6 +504,15 @@ namespace ev {
     void set (K *object) throw ()
     {
       set_ (object, method_noargs_thunk<K, method>);
+    }
+
+    // lambda callback
+    void set (const std::function<void(watcher&,int)> &lambda) throw ()
+    {
+      functor_from_lambda<watcher> functor(lambda);
+
+      this->functor = functor;
+      set (&this->functor);
     }
 
     template<class K, void (K::*method)()>
