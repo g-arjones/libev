@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libev
+Description: Full-featured high-performance event loop loosely modelled after libevent
+Version: @VERSION@
+Libs: -L${libdir} -lev
+Cflags: -I${includedir}
